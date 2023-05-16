@@ -1,128 +1,157 @@
 ﻿using OfficeOpenXml;
+using OfficeOpenXml.ConditionalFormatting;
+using OfficeOpenXml.FormulaParsing.Excel.Functions.DateTime;
 using OfficeOpenXml.Style;
+using STIS.Framework.V4;
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Diagnostics;
 using System.IO;
+using System.IO.Packaging;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Input;
+using System.Xml.Linq;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace ExcelFramwork
 {
 	class Program
 	{
-		static void Main(string[] args)
-		{
-            //FileInfo newFile = null;
-            /*if (!File.Exists(path + "\\testsheet2.xlsx"))
-            newFile = new FileInfo(path + "\\testsheet2.xlsx");
-            else
-                return newFile;*/
-            Console.WriteLine("시작");
-            var Articles = new[]
-            {
-                new {
-                    Id = "101", Name = "C++"
-                },
-                new {
-                    Id = "102", Name = "Python"
-                },
-                new {
-                    Id = "103", Name = "Java Script"
-                },
-                new {
-                    Id = "104", Name = "GO"
-                },
-                new {
-                    Id = "105", Name = "Java"
-                },
-                new {
-                    Id = "106", Name = "C#"
-                }
-            };
+        static void Main(string[] args)
+        {
+          
             //읽는 파일 위치
-            string Path = @"D:\source\repos\ExcelFramwork\ExcelFramwork\bin\Debug\exceltest\abcd.xlsx";
+            string Path = "";
 
 
-            DataTable dataTable = new DataTable();
+            //기본 엑셀 파일 경로 (day, month, year) 
+            Path = @"D:\source\repos\ExcelReport\ExcelFramwork\bin\Debug\exceltest\day1.xlsx";
+
+            //구분 ex) 년 1, 월 2, 일 3
+            int group = 3;
+
+            
+            //보고서용 테이블 타입별 관제점 리스트 조회
+            DataSet ds = Util.GetReportPtAddressList(group);
+            
+            var Formula = "";
+            var cols = "";
+
+            if (ds != null && ds.Tables[0].Rows.Count > 0)
+            {
+
+                int ct = 1;
+                
+                for (int i = 0; i < ds.Tables[0].Rows.Count; i++)
+                {
+
+
+                    if (ct != ds.Tables[0].Rows.Count)
+                    {
+                        var pt_addr = ds.Tables[0].Rows[i]["pt_addr"] + "|";
+                        var pt_point = ds.Tables[0].Rows[i]["ReportPoint"] + ",";
+
+                        Formula += pt_addr;
+
+                        if(cols.Contains(ds.Tables[0].Rows[i]["ReportPoint"].ToString()) == false)
+                        {
+                             cols += pt_point;
+                        }
+                    }
+                    else
+                    {
+                        var pt_addr = ds.Tables[0].Rows[i]["pt_addr"];
+                        var pt_point = ds.Tables[0].Rows[i]["ReportPoint"];
+
+                        Formula += pt_addr;
+                        
+                        if (cols.Contains(ds.Tables[0].Rows[i]["ReportPoint"].ToString()) == false)      
+                        {
+                            cols += pt_point;  
+                        }
+                    }
+
+                    ct = ct + 1;
+                }
+
+            }
+            else
+            {
+                return;
+            } 
+
+            //타입별 기간 설정하기
+            //일
+            //var fromDt = DateTime.Now.AddDays(-1).ToString("yyyyMMdd") + "00";
+            //var toDt = DateTime.Now.AddDays(-1).ToString("yyyyMMdd") + "23";
+
+            var fromDt = "2021051100";
+            var toDt = "2021051123";
+
+
+
+
+            TimePeriod timePeriod = new TimePeriod();
+            PtData calculation = new PtData();
+
+            timePeriod.FromDT= fromDt;
+            timePeriod.ToDT = toDt;
+            timePeriod.IntervalMin = "0";
+            timePeriod.TimeSelect = group; 
+            calculation.Cols = cols;
+            calculation.Formulas = Formula;
+
+            //관제점 값 가져오기 
+            var result = Util.GetData(calculation, timePeriod);
+
             using (ExcelPackage excel = new ExcelPackage(Path))
             {
-                
-
-                //라이센스
+                                //라이센스
                 ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
-                // name of the sheet
                 var workSheet = excel.Workbook.Worksheets[0];
 
-                int rowCont = workSheet.Dimension.Rows;
-                int colCount = workSheet.Dimension.Columns;
+                int pt_count = 1;
 
-                for (int col = 1; col <= colCount; col++)
-				{
-                    dataTable.Columns.Add("Col"+col.ToString());
-                    //dataTable.Columns.Add(workSheet.Cells[1, col].Value.ToString());
-
-                }
-                Queue<ExcelClass> Quecol = new Queue<ExcelClass>();
-                //Queue<int> Querow = new Queue<int>();
-                for (int row =1; row <= rowCont; row++)
-				{
-                    DataRow dataRow = dataTable.NewRow();
-                    for(int column = 1; column <= colCount; column++)
-					{
-                        if(workSheet.Cells[row, column].Value != null && workSheet.Cells[row, column].Value.ToString().Substring(0,1) == "C")
-						{
-                            var ExcelClass = new ExcelClass();
-                            ExcelClass.Col = column;
-                            ExcelClass.Row = row;
-                            Quecol.Enqueue(ExcelClass);
-                            //Querow.Enqueue(row);
-
-                        }
-
-                        dataRow[column - 1] = workSheet.Cells[row, column].Value;
-
-					}
-                    dataTable.Rows.Add(dataRow);
-				}
-                string k2 = "Col3";
-                string f2 = "C*";
-                DataRow[] rs2 = dataTable.Select("[" + k2 + "] LIKE '" + f2 + "'");
-                // setting the properties
-                // of the work sheet 
-                workSheet.DefaultRowHeight = 12;
-
-                // Setting the properties
-                // of the first row
-                workSheet.Row(1).Height = 20;
-                workSheet.Row(1).Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
-                workSheet.Row(1).Style.Font.Bold = true;
-
-                // 헤더 정보
-                workSheet.Cells[1, 1].Value = "S.No";
-                workSheet.Cells[1, 2].Value = "Id";
-                workSheet.Cells[1, 3].Value = "Name";
-
-                //시작 포인트
-                int recordIndex = 2;
-
-                foreach (var article in Articles)
+                if (result != null && result.Tables[0].Rows.Count > 0)
                 {
-                    workSheet.Cells[recordIndex, 1].Value = (recordIndex - 1).ToString();
-                    workSheet.Cells[recordIndex, 2].Value = article.Id;
-                    workSheet.Cells[recordIndex, 3].Value = article.Name;
-                    recordIndex++;
-                }
+                    workSheet.Cells[2, 2].Value = "성능진단용 분석 보고서";
 
-                // 자동 셀크기 조정
-                workSheet.Column(1).AutoFit();
-                workSheet.Column(2).AutoFit();
-                workSheet.Column(3).AutoFit();
-                DateTime thisDate2 = new DateTime();
-                thisDate2 = DateTime.Now;
+                      for (var i = 0; i< result.Tables[0].Columns.Count; i++)
+                       {
+                          if((result.Tables[0].Columns[i].ColumnName) == pt_count.ToString())
+                          {
+                              workSheet.Cells[3, i + 2].Value = ds.Tables[0].Rows[pt_count - 1]["pt_name"];
+                              
+                              
+                              pt_count++;
+
+                          }
+                          else
+                          {
+                              workSheet.Cells[3, i + 2].Value = result.Tables[0].Columns[i].ColumnName;
+
+                          }
+
+                      }
+
+                      for (var i = 0; i < result.Tables[0].Rows.Count; i++)
+                      {
+                          for (var j = 0; j < result.Tables[0].Columns.Count; j++)
+                          {
+
+                              workSheet.Cells[i + 4, j + 2].Value = result.Tables[0].Rows[i][j];
+
+                          }
+                          
+                      }
+                }
+                workSheet.Columns.AutoFit();
+
                 // 저장파일위치 
-                string p_strPath = @"D:\source\repos\ExcelFramwork\ExcelFramwork\bin\Debug\exceltest\"+thisDate2.ToString("yyyyMMddmmss")+".xlsx";
+                string p_strPath = @"D:\source\repos\ExcelReport\ExcelFramwork\bin\Debug\exceltest\DAY_" + DateTime.Now.ToString("yyyymmddhhmmss") + ".xlsx";
 
                 if (File.Exists(p_strPath))
                     File.Delete(p_strPath);
@@ -135,9 +164,14 @@ namespace ExcelFramwork
                 File.WriteAllBytes(p_strPath, excel.GetAsByteArray());
                 //엑셀 닫기
                 excel.Dispose();
+
+                
+                Environment.Exit(0);
+
+                return;
+
             }
-            Console.WriteLine("성공! 아무 버튼 누르세요");
-            Console.ReadKey();
+
         }
 	}
 }
