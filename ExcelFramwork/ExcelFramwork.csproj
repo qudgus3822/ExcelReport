@@ -7,7 +7,7 @@
     <ProjectGuid>{00DC90B5-C3E5-4B6E-97F1-921A48C3C72E}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <RootNamespace>ExcelFramwork</RootNamespace>
-    <AssemblyName>DayReport</AssemblyName>
+    <AssemblyName>MonthReport</AssemblyName>
     <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>

@@ -26,14 +26,20 @@ namespace ExcelFramwork
             //읽는 파일 위치
             string Path = "";
 
-
             //기본 엑셀 파일 경로 (day, month, year) 
-            Path = @"D:\source\repos\ExcelReport\ExcelFramwork\bin\Debug\exceltest\day1.xlsx";
+            //Path = @"D:\source\repos\ExcelReport\ExcelFramwork\bin\Debug\exceltest\day.xlsx";
+            Path = @"D:\source\repos\ExcelReport\ExcelFramwork\bin\Debug\exceltest\month.xlsx";
+
+
+            //Path = @"C:\Users\클라우드플렛폼\source\repos\MainBlack\Web\BEMS.Web.MainBlack\Upload\Report\BaseExcel\day.xlsx";
+            //Path = @"C:\Users\클라우드플렛폼\source\repos\MainBlack\Web\BEMS.Web.MainBlack\Upload\Report\BaseExcel\month.xlsx";
 
             //구분 ex) 년 1, 월 2, 일 3
-            int group = 3;
+            //int group = 1;
+            int group = 2;
+            //int group = 3;
 
-            
+
             //보고서용 테이블 타입별 관제점 리스트 조회
             DataSet ds = Util.GetReportPtAddressList(group);
             
@@ -84,12 +90,19 @@ namespace ExcelFramwork
             } 
 
             //타입별 기간 설정하기
+
             //일
             //var fromDt = DateTime.Now.AddDays(-1).ToString("yyyyMMdd") + "00";
             //var toDt = DateTime.Now.AddDays(-1).ToString("yyyyMMdd") + "23";
 
-            var fromDt = "2021051100";
-            var toDt = "2021051123";
+            //월
+            var y1 = DateTime.Now.AddDays(-1).ToString("yyyy");
+            var m1 = DateTime.Now.AddDays(-1).ToString("MM");
+
+            var lastMonthDay = DateTime.DaysInMonth(int.Parse(y1), int.Parse(m1));
+            var fromDt = DateTime.Now.AddDays(-1).ToString("yyyyMM") + "01";
+            var toDt = DateTime.Now.AddDays(-1).ToString("yyyyMM") + lastMonthDay;
+
 
 
 
@@ -151,7 +164,12 @@ namespace ExcelFramwork
                 workSheet.Columns.AutoFit();
 
                 // 저장파일위치 
-                string p_strPath = @"D:\source\repos\ExcelReport\ExcelFramwork\bin\Debug\exceltest\DAY_" + DateTime.Now.ToString("yyyymmddhhmmss") + ".xlsx";
+          //      string p_strPath = @"D:\source\repos\ExcelReport\ExcelFramwork\bin\Debug\exceltest\DAY_" + DateTime.Now.ToString("yyyymmddhhmmss") + ".xlsx";
+
+                string p_strPath = @"D:\source\repos\ExcelReport\ExcelFramwork\bin\Debug\exceltest\Month_" + DateTime.Now.ToString("yyyymmddhhmmss") + ".xlsx";
+
+                //string p_strPath = @"C:\Users\클라우드플렛폼\source\repos\MainBlack\Web\BEMS.Web.MainBlack\Upload\Report\Day\DAY_" + DateTime.Now.ToString("yyyymmddhhmmss") + ".xlsx";
+                //string p_strPath = @"C:\Users\클라우드플렛폼\source\repos\MainBlack\Web\BEMS.Web.MainBlack\Upload\Report\Month\Month_" + DateTime.Now.ToString("yyyymmdd") + ".xlsx";
 
                 if (File.Exists(p_strPath))
                     File.Delete(p_strPath);
